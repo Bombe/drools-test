@@ -46,8 +46,7 @@ end
 
 rule "Increase the salaries"
   when
-    e: Employee(s: salary)
-    i: IncreaseSalaryAction(employee == e, processed == false, a: raiseSalaryRequest.amount)
+    i: IncreaseSalaryAction(e: employee, s: employee.salary, processed == false, a: raiseSalaryRequest.amount)
   then
     modify(e) {
       setSalary(s + a)
