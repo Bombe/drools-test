@@ -1,0 +1,68 @@
+package drools.test
+
+rule "Create Increase-Salary Requests for Everyone"
+  when
+    e: Employee()
+    r: RaiseSalaryRequest(execOnly == false)
+    not (IncreaseSalaryAction(employee == e, raiseSalaryRequest == r))
+  then
+    insert(new IncreaseSalaryAction(e, r, false));
+    System.out.println("inserted IS for " + e + "/" + r);
+end
+
+rule "Create Increase-Salary Requests for Execs"
+  when
+    e: Employee(exec == true)
+    r: RaiseSalaryRequest(execOnly == true)
+    not (IncreaseSalaryAction(employee == e, raiseSalaryRequest == r))
+  then
+    insert(new IncreaseSalaryAction(e, r, false));
+    System.out.println("inserted IS for " + e + "/" + r);
+end
+
+rule "Remove raise-salary request once all raises have been created"
+  when
+    r: RaiseSalaryRequest(execOnly == false)
+    forall(
+      e: Employee()
+      IncreaseSalaryAction(employee == e, raiseSalaryRequest == r)
+    )
+  then
+    delete(r);
+    System.out.println("removed " + r);
+end
+
+rule "Remove raise-salary request for execs once all raises have been created"
+  when
+    r: RaiseSalaryRequest(execOnly == true)
+    forall(
+      e: Employee(exec == true)
+      IncreaseSalaryAction(employee == e, raiseSalaryRequest == r)
+    )
+  then
+    delete(r);
+    System.out.println("removed " + r);
+end
+
+rule "Increase the salaries"
+  when
+    e: Employee(s: salary)
+    i: IncreaseSalaryAction(employee == e, processed == false, a: raiseSalaryRequest.amount)
+  then
+    modify(e) {
+      setSalary(s + a)
+    }
+    System.out.println("modified " + e);
+    modify(i) {
+      setProcessed(true)
+    }
+    System.out.println("modified " + i);
+end
+
+rule "Remove increasal processors"
+  when
+    i: IncreaseSalaryAction(processed == true)
+  then
+    delete(i);
+    System.out.println("removed " + i);
+end
